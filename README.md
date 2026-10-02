@@ -140,6 +140,10 @@ docker compose up -d db
 PGVECTOR_TEST_URL=postgresql://vet:vet@localhost:5432/vet_agent pytest tests/test_pgvector_integration.py
 ```
 
+## License
+
+Released under the [MIT License](LICENSE).
+
 ## Known limitations
 
 - The agent has only been tested with scripted LLM responses; it has not been run against a live
