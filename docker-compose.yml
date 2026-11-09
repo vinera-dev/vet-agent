@@ -1,13 +1,18 @@
+name: vet
+
 services:
   api:
     build: .
     ports:
-      - "8000:8000"
-    env_file: .env
+      - "${API_PORT:-8000}:8000"
+    env_file:
+      - path: .env
+        required: false
     environment:
       DATABASE_URL: postgresql://vet:vet@db:5432/vet_agent
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     image: pgvector/pgvector:pg16
@@ -16,9 +21,14 @@ services:
       POSTGRES_PASSWORD: vet
       POSTGRES_DB: vet_agent
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vet -d vet_agent"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
 
 volumes:
   pgdata:
