@@ -42,11 +42,22 @@ pytest
 uvicorn vet_agent.main:app --reload
 ```
 
-With Docker:
+With Docker (the API and a PostgreSQL database with pgvector; the FAQ index is stored in the
+database by default):
 
 ```bash
 docker compose up --build
 ```
+
+The compose project is named `vet`. The host ports default to 8000 for the API and 5432 for the
+database, and can be changed with `API_PORT` and `DB_PORT`:
+
+```bash
+API_PORT=23000 DB_PORT=23432 docker compose up --build
+```
+
+To run without Azure credentials, set `LLM_BACKEND=local`: a deterministic, rule-based stand-in
+for the model that is meant for demos and offline checks, not for judging answer quality.
 
 The test suite uses scripted LLM responses, so it runs offline without any credentials.
 
@@ -154,8 +165,12 @@ The pgvector integration test runs when a Postgres instance is available:
 
 ```bash
 docker compose up -d db
-PGVECTOR_TEST_URL=postgresql://vet:vet@localhost:5432/vet_agent pytest tests/test_pgvector_integration.py
+PGVECTOR_TEST_URL=postgresql://vet:vet@127.0.0.1:5432/vet_agent pytest tests/test_pgvector_integration.py
 ```
+
+It has been run against the `pgvector/pgvector:pg16` image from `docker-compose.yml`, and the
+compose stack answers the bath price question from `servicos.md` through `/faq/ingest` and
+`/faq/ask`.
 
 ## License
 
@@ -168,4 +183,3 @@ Released under the [MIT License](LICENSE).
 - The emergency and injection checks are keyword-based, so they are a first line of defense and do
   not cover every phrasing.
 - Appointments and session memory are kept in memory and are lost on restart.
-- The pgvector store has not yet been validated against a running PostgreSQL instance.

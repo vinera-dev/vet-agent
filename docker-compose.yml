@@ -10,6 +10,8 @@ services:
         required: false
     environment:
       DATABASE_URL: postgresql://vet:vet@db:5432/vet_agent
+      VECTOR_STORE_BACKEND: ${VECTOR_STORE_BACKEND:-pgvector}
+      LLM_BACKEND: ${LLM_BACKEND:-azure}
     depends_on:
       db:
         condition: service_healthy

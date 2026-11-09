@@ -29,7 +29,7 @@ class IngestResponse(BaseModel):
 def _build_store() -> VectorStore:
     settings = get_settings()
     if settings.vector_store_backend == "pgvector":
-        return PgVectorStore(settings.database_url, settings.embedding_dimensions)
+        return PgVectorStore(settings.database_url, _build_embedder().dimensions)
     return InMemoryVectorStore()
 
 
