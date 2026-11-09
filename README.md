@@ -99,6 +99,13 @@ The report shows accuracy and per-class precision and recall, and `tests/test_gu
 requires 100% on this set. Evaluating routing and answer quality with the real LLM needs Azure
 credentials and is planned for the observability step.
 
+The set has 63 cases. The first 30 were written together with the rules. The next 33 were
+written afterwards with new phrasings: on those, the rules first scored 68% overall (recall of
+53% on emergencies and 50% on injections, plus a false positive on an ordinary question). The
+patterns were then extended and the set now passes, so 100% is a regression guard and not an
+estimate of how well the rules generalize. Keyword rules stay brittle against phrasings nobody
+has thought of, which is why they are only the first layer.
+
 ## Scheduling
 
 The clinic is open Monday to Saturday, 08:00 to 18:00, in 30-minute slots. The rules live in
