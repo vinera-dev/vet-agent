@@ -4,8 +4,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
+from vet_agent.agent.checkpointing import build_checkpointer
 from vet_agent.agent.models import AgentReply
 from vet_agent.agent.service import AgentService
+from vet_agent.config import get_settings
 from vet_agent.dependencies import get_llm
 from vet_agent.rag.routes import get_faq_service
 from vet_agent.ratelimit import enforce_rate_limit
@@ -26,6 +28,7 @@ def get_agent_service() -> AgentService:
         llm=llm,
         faq=get_faq_service(llm),
         scheduling=get_scheduling_service(),
+        checkpointer=build_checkpointer(get_settings()),
     )
 
 

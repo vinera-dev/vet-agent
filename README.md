@@ -135,8 +135,26 @@ changed. The agent uses the same rules through tool calling: `scheduling/tools.p
 `list_available_slots`, `book_appointment`, `reschedule_appointment` and `cancel_appointment`,
 returning `{"ok": false, "error": {"code", "message"}}` on failure.
 
-Appointments are stored in memory behind an interface, so PostgreSQL can replace the store without
-touching the service.
+Appointments live behind a repository interface with two implementations, selected by
+`APPOINTMENT_BACKEND`: `memory` (default outside Docker) and `postgres`. The PostgreSQL schema is
+versioned in `migrations/*.sql` and applied by `python -m vet_agent.db.migrate` (the API also
+applies pending migrations at startup when the backend is `postgres`). A partial unique index
+guarantees that two active appointments never share a slot, and one behavior suite
+(`tests/test_appointment_repository.py`) runs against both repositories.
+
+Agent conversations are persisted by the LangGraph PostgreSQL checkpointer when
+`SESSION_BACKEND=postgres`, so restarting the API does not lose a conversation in progress. With
+`docker compose up` both backends default to `postgres`.
+
+The PostgreSQL tests only run when a database is available:
+
+```bash
+docker compose up -d db
+POSTGRES_TEST_URL=postgresql://vet:vet@127.0.0.1:5432/vet_agent pytest
+```
+
+Each test creates and drops its own database, so the URL only needs a role that can create
+databases.
 
 ## FAQ with RAG
 
@@ -182,4 +200,5 @@ Released under the [MIT License](LICENSE).
   Azure OpenAI deployment yet.
 - The emergency and injection checks are keyword-based, so they are a first line of defense and do
   not cover every phrasing.
-- Appointments and session memory are kept in memory and are lost on restart.
+- Outside Docker, appointments and session memory default to memory and are lost on restart;
+  set `APPOINTMENT_BACKEND` and `SESSION_BACKEND` to `postgres` to keep them.

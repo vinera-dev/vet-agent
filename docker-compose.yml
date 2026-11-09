@@ -12,6 +12,8 @@ services:
       DATABASE_URL: postgresql://vet:vet@db:5432/vet_agent
       VECTOR_STORE_BACKEND: ${VECTOR_STORE_BACKEND:-pgvector}
       LLM_BACKEND: ${LLM_BACKEND:-azure}
+      APPOINTMENT_BACKEND: ${APPOINTMENT_BACKEND:-postgres}
+      SESSION_BACKEND: ${SESSION_BACKEND:-postgres}
     depends_on:
       db:
         condition: service_healthy
