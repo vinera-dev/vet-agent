@@ -106,6 +106,16 @@ patterns were then extended and the set now passes, so 100% is a regression guar
 estimate of how well the rules generalize. Keyword rules stay brittle against phrasings nobody
 has thought of, which is why they are only the first layer.
 
+Retrieval has its own set, `data/eval/faq.json`, with 30 questions and the document and section that should answer each one:
+
+```bash
+python -m vet_agent.evaluation_retrieval
+```
+
+With the offline hashing embedder, the correct section is in the top 3 for 90% of the questions and first for 80%. The misses are paraphrases that share no words with the document, such as "what time do you open and close" against a section titled "Funcionamento da clínica". `tests/test_evaluation_datasets.py` requires at least 85% at top 3. These numbers do not apply to the Azure embeddings, which still have to be measured.
+
+Routing has a third set, `data/eval/routing.json`, with 30 messages and their expected intent. `python -m vet_agent.evaluation_routing` classifies them with the real model, so it needs the Azure credentials and has not been run yet. The tests only check the dataset and the runner's arithmetic with a scripted classifier.
+
 ## Scheduling
 
 The clinic is open Monday to Saturday, 08:00 to 18:00, in 30-minute slots. The rules live in
