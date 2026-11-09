@@ -9,6 +9,7 @@ from vet_agent.agent.models import AgentReply
 from vet_agent.agent.service import AgentService
 from vet_agent.config import get_settings
 from vet_agent.dependencies import get_llm
+from vet_agent.observability import get_tracer
 from vet_agent.rag.routes import get_faq_service
 from vet_agent.ratelimit import enforce_rate_limit
 from vet_agent.scheduling.routes import get_scheduling_service
@@ -29,6 +30,7 @@ def get_agent_service() -> AgentService:
         faq=get_faq_service(llm),
         scheduling=get_scheduling_service(),
         checkpointer=build_checkpointer(get_settings()),
+        tracer=get_tracer(),
     )
 
 

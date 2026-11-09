@@ -12,6 +12,7 @@ from vet_agent.agent import messages
 from vet_agent.agent.guardrails import redact_pii, screen_input, violates_output_policy
 from vet_agent.agent.llm_json import parse_json_object
 from vet_agent.llm import LLMClient
+from vet_agent.observability import Tracer
 from vet_agent.rag.service import FaqService
 from vet_agent.scheduling.service import SchedulingService
 from vet_agent.scheduling.tools import TOOL_ARGUMENTS, execute_tool, tool_definitions
@@ -103,7 +104,9 @@ def build_agent_graph(
     scheduling: SchedulingService,
     now: Callable[[], datetime],
     checkpointer: BaseCheckpointSaver,
+    tracer: Tracer | None = None,
 ) -> CompiledStateGraph:
+    tracer = tracer or Tracer()
     tools_json = json.dumps(tool_definitions(), ensure_ascii=False)
 
     def guard_input(state: AgentState) -> dict[str, Any]:
@@ -200,14 +203,14 @@ def build_agent_graph(
         return "run_tool" if state.get("action") else "finalize"
 
     graph = StateGraph(AgentState)
-    graph.add_node("guard_input", guard_input)
-    graph.add_node("classify", classify)
-    graph.add_node("faq_answer", faq_answer)
-    graph.add_node("medical_refusal", medical_refusal)
-    graph.add_node("smalltalk", smalltalk)
-    graph.add_node("plan_scheduling", plan_scheduling)
-    graph.add_node("run_tool", run_tool)
-    graph.add_node("finalize", finalize)
+    graph.add_node("guard_input", tracer.node("guard_input")(guard_input))
+    graph.add_node("classify", tracer.node("classify")(classify))
+    graph.add_node("faq_answer", tracer.node("faq_answer")(faq_answer))
+    graph.add_node("medical_refusal", tracer.node("medical_refusal")(medical_refusal))
+    graph.add_node("smalltalk", tracer.node("smalltalk")(smalltalk))
+    graph.add_node("plan_scheduling", tracer.node("plan_scheduling")(plan_scheduling))
+    graph.add_node("run_tool", tracer.node("run_tool")(run_tool))
+    graph.add_node("finalize", tracer.node("finalize")(finalize))
 
     graph.add_edge(START, "guard_input")
     graph.add_conditional_edges("guard_input", after_guard, ["classify", "finalize"])

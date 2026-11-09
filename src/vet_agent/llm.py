@@ -1,8 +1,27 @@
+from contextvars import ContextVar
+from dataclasses import dataclass
 from typing import Protocol
 
 from openai import AzureOpenAI
 
 from vet_agent.config import Settings
+
+
+@dataclass(frozen=True)
+class TokenUsage:
+    prompt_tokens: int
+    completion_tokens: int
+
+
+_usage: ContextVar[TokenUsage | None] = ContextVar("llm_usage", default=None)
+
+
+def reset_usage() -> None:
+    _usage.set(None)
+
+
+def last_usage() -> TokenUsage | None:
+    return _usage.get()
 
 
 class LLMClient(Protocol):
@@ -31,4 +50,8 @@ class AzureOpenAIClient:
                 {"role": "user", "content": user},
             ],
         )
+        if response.usage is not None:
+            _usage.set(
+                TokenUsage(response.usage.prompt_tokens, response.usage.completion_tokens)
+            )
         return response.choices[0].message.content or ""

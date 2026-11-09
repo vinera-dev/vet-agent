@@ -12,6 +12,7 @@ from vet_agent.config import get_settings
 from vet_agent.db.migrate import apply_migrations
 from vet_agent.dependencies import get_llm
 from vet_agent.llm import LLMClient
+from vet_agent.observability import get_tracer
 from vet_agent.rag.routes import router as faq_router
 from vet_agent.scheduling.routes import router as scheduling_router
 
@@ -27,6 +28,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     if settings.appointment_backend == "postgres":
         apply_migrations(settings.database_url, Path(settings.migrations_directory))
     yield
+    get_tracer().flush()
 
 
 app = FastAPI(title="vet-agent", version=__version__, lifespan=lifespan)
