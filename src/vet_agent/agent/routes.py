@@ -8,6 +8,7 @@ from vet_agent.agent.models import AgentReply
 from vet_agent.agent.service import AgentService
 from vet_agent.dependencies import get_llm
 from vet_agent.rag.routes import get_faq_service
+from vet_agent.ratelimit import enforce_rate_limit
 from vet_agent.scheduling.routes import get_scheduling_service
 
 router = APIRouter(prefix="/agent", tags=["agent"])
@@ -31,6 +32,6 @@ def get_agent_service() -> AgentService:
 AgentDep = Annotated[AgentService, Depends(get_agent_service)]
 
 
-@router.post("/chat", response_model=AgentReply)
+@router.post("/chat", response_model=AgentReply, dependencies=[Depends(enforce_rate_limit)])
 def chat(request: AgentChatRequest, service: AgentDep) -> AgentReply:
     return service.chat(request.message, request.session_id)
