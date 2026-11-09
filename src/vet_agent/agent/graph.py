@@ -91,6 +91,12 @@ def _transcript(history: list[dict[str, str]]) -> str:
     )
 
 
+def classify_intent(llm: LLMClient, history: list[dict[str, str]]) -> str:
+    raw = llm.complete(INTENT_SYSTEM_PROMPT, _transcript(history))
+    intent = (parse_json_object(raw) or {}).get("intent")
+    return intent if intent in INTENTS else "smalltalk"
+
+
 def build_agent_graph(
     llm: LLMClient,
     faq: FaqService,
@@ -119,10 +125,7 @@ def build_agent_graph(
         return update
 
     def classify(state: AgentState) -> dict[str, Any]:
-        raw = llm.complete(INTENT_SYSTEM_PROMPT, _transcript(state["history"]))
-        parsed = parse_json_object(raw) or {}
-        intent = parsed.get("intent")
-        return {"intent": intent if intent in INTENTS else "smalltalk"}
+        return {"intent": classify_intent(llm, state["history"])}
 
     def faq_answer(state: AgentState) -> dict[str, Any]:
         answer = faq.ask(state["user_message"])
