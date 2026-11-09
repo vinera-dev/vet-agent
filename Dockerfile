@@ -14,6 +14,7 @@ RUN groupadd --system --gid 10001 app \
 COPY --from=builder /opt/venv /opt/venv
 WORKDIR /app
 COPY --chown=app:app data ./data
+COPY --chown=app:app migrations ./migrations
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1

@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     embedding_backend: Literal["azure", "hashing"] = "hashing"
     embedding_dimensions: int = 1536
     vector_store_backend: Literal["memory", "pgvector"] = "memory"
+    appointment_backend: Literal["memory", "postgres"] = "memory"
+    session_backend: Literal["memory", "postgres"] = "memory"
+    migrations_directory: str = "migrations"
     faq_directory: str = "data/faq"
     rag_top_k: int = 3
     rag_min_score: float = 0.1
