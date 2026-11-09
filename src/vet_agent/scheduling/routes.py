@@ -5,8 +5,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from vet_agent.config import get_settings
 from vet_agent.scheduling.models import Appointment, ServiceType
-from vet_agent.scheduling.repository import InMemoryAppointmentRepository
+from vet_agent.scheduling.pgrepository import PostgresAppointmentRepository
+from vet_agent.scheduling.repository import AppointmentRepository, InMemoryAppointmentRepository
 from vet_agent.scheduling.service import SchedulingError, SchedulingService
 
 STATUS_BY_ERROR_CODE = {
@@ -31,9 +33,16 @@ class RescheduleRequest(BaseModel):
     new_start: datetime
 
 
+def build_repository() -> AppointmentRepository:
+    settings = get_settings()
+    if settings.appointment_backend == "postgres":
+        return PostgresAppointmentRepository(settings.database_url)
+    return InMemoryAppointmentRepository()
+
+
 @lru_cache
 def get_scheduling_service() -> SchedulingService:
-    return SchedulingService(InMemoryAppointmentRepository())
+    return SchedulingService(build_repository())
 
 
 SchedulingDep = Annotated[SchedulingService, Depends(get_scheduling_service)]

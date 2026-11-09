@@ -1,3 +1,6 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI
@@ -5,6 +8,8 @@ from pydantic import BaseModel, Field
 
 from vet_agent import __version__
 from vet_agent.agent.routes import router as agent_router
+from vet_agent.config import get_settings
+from vet_agent.db.migrate import apply_migrations
 from vet_agent.dependencies import get_llm
 from vet_agent.llm import LLMClient
 from vet_agent.rag.routes import router as faq_router
@@ -16,7 +21,15 @@ SYSTEM_PROMPT = (
     "a procurar atendimento presencial imediato."
 )
 
-app = FastAPI(title="vet-agent", version=__version__)
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    settings = get_settings()
+    if settings.appointment_backend == "postgres":
+        apply_migrations(settings.database_url, Path(settings.migrations_directory))
+    yield
+
+
+app = FastAPI(title="vet-agent", version=__version__, lifespan=lifespan)
 app.include_router(scheduling_router)
 app.include_router(faq_router)
 app.include_router(agent_router)

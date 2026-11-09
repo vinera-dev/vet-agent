@@ -3,7 +3,7 @@ from datetime import date, datetime, time, timedelta
 from uuid import uuid4
 
 from vet_agent.scheduling.models import Appointment, AppointmentStatus, ServiceType
-from vet_agent.scheduling.repository import AppointmentRepository
+from vet_agent.scheduling.repository import AppointmentRepository, SlotConflictError
 
 OPENING_TIME = time(8, 0)
 CLOSING_TIME = time(18, 0)
@@ -45,14 +45,14 @@ class SchedulingService:
             service=service,
             start=start,
         )
-        self._repository.add(appointment)
+        self._store(self._repository.add, appointment)
         return appointment
 
     def reschedule(self, appointment_id: str, new_start: datetime) -> Appointment:
         appointment = self._get_scheduled(appointment_id)
         self._ensure_bookable(new_start)
         updated = appointment.model_copy(update={"start": new_start})
-        self._repository.update(updated)
+        self._store(self._repository.update, updated)
         return updated
 
     def cancel(self, appointment_id: str) -> Appointment:
@@ -66,6 +66,12 @@ class SchedulingService:
         if appointment is None:
             raise SchedulingError("not_found", "Agendamento não encontrado.")
         return appointment
+
+    def _store(self, write: Callable[[Appointment], None], appointment: Appointment) -> None:
+        try:
+            write(appointment)
+        except SlotConflictError as exc:
+            raise SchedulingError("slot_unavailable", "Esse horário já está ocupado.") from exc
 
     def _get_scheduled(self, appointment_id: str) -> Appointment:
         appointment = self.get(appointment_id)
