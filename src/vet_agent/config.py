@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     faq_directory: str = "data/faq"
     rag_top_k: int = 3
     rag_min_score: float = 0.1
+    agent_rate_limit_requests: int = 20
+    agent_rate_limit_window_seconds: int = 60
 
 
 @lru_cache
