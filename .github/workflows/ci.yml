@@ -8,6 +8,23 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: vet
+          POSTGRES_PASSWORD: vet
+          POSTGRES_DB: vet_agent
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vet -d vet_agent"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      POSTGRES_TEST_URL: postgresql://vet:vet@127.0.0.1:5432/vet_agent
+      PGVECTOR_TEST_URL: postgresql://vet:vet@127.0.0.1:5432/vet_agent
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -16,3 +33,4 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: ruff check .
       - run: pytest
+      - run: docker build -t vet-agent .
